@@ -42,7 +42,7 @@ pipeline {
                 message "Select The Platform to Deploy"
                 ok "Platform Selected"
                 parameters {
-                    string(name: 'NEWAPP', choices: ['`AWS', 'Azure', 'GCP'], description: 'Select The Platform')
+                    string(name: 'NEWAPP', choices: ['AWS', 'Azure', 'GCP'], description: 'Select The Platform')
                 }
             }
             steps {
