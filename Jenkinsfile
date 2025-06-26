@@ -38,6 +38,13 @@ pipeline {
             }
         }
         stage('Publish') {
+            input {
+                message "Select The Platform to Deploy"
+                ok "Platform Selected"
+                parameters {
+                    string(name: 'NEWAPP', choices: ['`AWS', 'Azure', 'GCP'], description: 'Select The Platform')
+                }
+            }
             steps {
                 echo 'Publishing the artifact to JFrog-NPD'
             }
