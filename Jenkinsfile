@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent none
+    tools {
+        // Define tools required for the pipeline
+        maven 'npd-maven'
+    }
 
     parameters {
         string(name: 'env', defaultValue: 'Test', description: 'Verstion to Deploy')
@@ -9,19 +13,27 @@ pipeline {
 
     stages {
         stage('Compile') {
+            agent any
             steps {
                 echo 'Compile the Code'
             }
         }
         stage('CodeReiew') {
+            agent any
+            when {
+                expression {
+                    params.AppVersion == '1.2'
+                }
+            }
             steps {
                 echo 'Review the Code'
             }
         }
         stage('UnitTest') {
+            agent any
             when {
                 expression {
-                    params.UTest == true
+                    params.UTest == true    
                 }
             }
             steps {
@@ -29,11 +41,13 @@ pipeline {
             }
         }
         stage('CoverageAnalysis') {
+            agent any
             steps {
                 echo 'Static Analysis'
             }
         }
         stage('Package') {
+            agent { label 'mpd-lab' }
             steps {
                 echo 'Package the Code'
                 echo "Deploying to ${params.env} environment with version ${params.AppVersion}"
