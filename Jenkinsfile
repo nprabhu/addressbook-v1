@@ -72,7 +72,9 @@ pipeline {
             input {
                 message 'Archive the artifacts?'
                 ok 'Select the platform'
-                choices(['JFrog', 'Nexus', 'NPD'])
+                parameters: [
+                    choice(name: 'TARGET_REPO', choices: ['JFrog', 'Nexus', 'NPD'], description: 'Choose to deploy')
+                ]
             }
             steps {
                 script {
