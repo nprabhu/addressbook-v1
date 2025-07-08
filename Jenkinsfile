@@ -70,12 +70,20 @@ pipeline {
                 ok 'Yes, Publish'
             }
             input {
-                message 'Archive the artifacts?'
-                ok 'Select the platform'
-                parameters: [
-                    choice(name: 'TARGET_REPO', choices: ['JFrog', 'Nexus', 'NPD'], description: 'Choose to deploy')
-                ]
-            }
+                message 'Do you want to publish the artifacts to JFrog and archive them?'
+                ok 'Proceed'
+                    parameters {
+                        choice(
+                            name: 'TARGET_REPO',
+                            choices: ['JFrog', 'Nexus', 'NPD'],
+                            description: 'Choose the target repository'
+                        )
+                        booleanParam(
+                            name: 'ARCHIVE_ARTIFACTS',
+                            defaultValue: false,
+                            description: 'Archive the artifacts?'
+                        )
+        }
             steps {
                 script {
                     echo 'Publish the Artifacts to JFrog'
