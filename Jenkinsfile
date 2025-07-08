@@ -64,6 +64,7 @@ pipeline {
             }
         }
         stage('PublishtoJFrog') {
+            agent any
             steps {
                 script {
                     echo 'Publish the Artifacts to JFrog'
