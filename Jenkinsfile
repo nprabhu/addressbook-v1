@@ -16,8 +16,8 @@ pipeline {
             agent any
             steps {
                 script {
-                echo 'Compile the Code'
-                sh 'mvn clean compile'
+                    echo 'Compile the Code'
+                    sh 'mvn clean compile'
                 }
             }
         }
@@ -25,8 +25,8 @@ pipeline {
             agent any
             steps {
                 script {
-                echo 'Review the Code'
-                sh 'pmd:pmd'
+                    echo 'Review the Code'
+                    sh 'mvn pmd:pmd'
                 }
             }
         }
@@ -39,8 +39,8 @@ pipeline {
             }
             steps {
                 script {
-                echo 'Test the Code'
-                sh 'mvn test'
+                    echo 'Test the Code'
+                    sh 'mvn test'
                 }
             }
         }
@@ -48,8 +48,8 @@ pipeline {
             agent any
             steps {
                 script {
-                echo 'Static Analysis'
-                sh 'mvn verify'
+                    echo 'Static Analysis'
+                    sh 'mvn verify'
                 }
             }
         }
@@ -57,17 +57,17 @@ pipeline {
             agent { label 'mpd-lab' }
             steps {
                 script {
-                echo 'Package the Code'
-                echo "Deploying to ${params.env} environment with version ${params.AppVersion}"
-                sh 'mvn package'
+                    echo 'Package the Code'
+                    echo "Deploying to ${params.env} environment with version ${params.AppVersion}"
+                    sh 'mvn package'
                 }
             }
         }
         stage('PublishtoJFrog') {
             steps {
                 script {
-                echo 'Publish the Artifacts to JFrog'
-                sh 'mvn -U deploy -s settings.xml'
+                    echo 'Publish the Artifacts to JFrog'
+                    sh 'mvn -U deploy -s settings.xml'
                 }
             }
         }
