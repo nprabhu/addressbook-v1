@@ -66,10 +66,6 @@ pipeline {
         stage('PublishtoJFrog') {
             agent any
             input {
-                message 'Do you want to publish the artifacts to JFrog?'
-                ok 'Yes, Publish'
-            }
-            input {
                 message 'Do you want to publish the artifacts to JFrog and archive them?'
                 ok 'Proceed'
                     parameters {
@@ -83,11 +79,12 @@ pipeline {
                             defaultValue: false,
                             description: 'Archive the artifacts?'
                         )
-        }
-            steps {
-                script {
-                    echo 'Publish the Artifacts to JFrog'
-                    sh 'mvn -U deploy -s settings.xml'
+                    }
+                steps {
+                    script {
+                        echo 'Publish the Artifacts to JFrog'
+                        sh 'mvn -U deploy -s settings.xml'
+                    }
                 }
             }
         }
