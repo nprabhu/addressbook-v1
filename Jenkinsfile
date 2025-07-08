@@ -65,6 +65,15 @@ pipeline {
         }
         stage('PublishtoJFrog') {
             agent any
+            input {
+                message 'Do you want to publish the artifacts to JFrog?'
+                ok 'Yes, Publish'
+            }
+            input {
+                message 'Archive the artifacts?'
+                ok 'Select the platform'
+                choices(['JFrog', 'Nexus', 'NPD'])
+            }
             steps {
                 script {
                     echo 'Publish the Artifacts to JFrog'
