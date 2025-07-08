@@ -15,47 +15,60 @@ pipeline {
         stage('Compile') {
             agent any
             steps {
+                script {
                 echo 'Compile the Code'
-            }
-        }
-        stage('CodeReiew') {
-            agent any
-            when {
-                expression {
-                    params.AppVersion == '1.2'
+                sh 'mvn clean compile'
                 }
             }
+        }
+        stage('CodeReview') {
+            agent any
             steps {
+                script {
                 echo 'Review the Code'
+                sh 'pmd:pmd'
+                }
             }
         }
         stage('UnitTest') {
             agent any
             when {
                 expression {
-                    params.UTest == true    
+                    params.UTest == true
                 }
             }
             steps {
+                script {
                 echo 'Test the Code'
+                sh 'mvn test'
+                }
             }
         }
         stage('CoverageAnalysis') {
             agent any
             steps {
+                script {
                 echo 'Static Analysis'
+                sh 'mvn verify'
+                }
             }
         }
         stage('Package') {
             agent { label 'mpd-lab' }
             steps {
+                script {
                 echo 'Package the Code'
                 echo "Deploying to ${params.env} environment with version ${params.AppVersion}"
+                sh 'mvn package'
+                }
             }
         }
         stage('PublishtoJFrog') {
             steps {
+                script {
                 echo 'Publish the Artifacts to JFrog'
+                sh 'mvn -U deploy -s settings.xml'
+                }
             }
         }
     }
