@@ -6,6 +6,7 @@ pipeline {
 
     stages {
         stage('Compile') {
+            agent any
             steps {
                 echo 'Compile the Code'
             }
@@ -16,6 +17,7 @@ pipeline {
             }
         }
         stage('UnitTest') {
+            agent any
             steps {
                 echo 'Test the Code'
             }
@@ -27,6 +29,7 @@ pipeline {
             }
         }
         stage('Package') {
+            agent any
             steps {
                 echo 'Packaging the code'
             }
