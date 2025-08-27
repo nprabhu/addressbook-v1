@@ -1,5 +1,8 @@
 pipeline {
-    agent any
+    agent none
+    tools{
+        maven 'npd-mvn'
+    }
 
     stages {
         stage('Compile') {
@@ -18,6 +21,7 @@ pipeline {
             }
         }
         stage('CoverageAnalysis') {
+            agent { label 'npd-lab'}
             steps {
                 echo 'StaticCodeCoverage'
             }
