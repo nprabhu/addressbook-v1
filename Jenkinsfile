@@ -52,6 +52,10 @@ pipeline {
         }
         stage('PublishToJFrog') {
             agent { label 'npd-lab' }
+            input {
+                message "Please approve to publish the artifact to JFrog"
+                ok "Publish"
+            }
             steps {
                 script{
                 echo 'Publish the Code to JFrog'
