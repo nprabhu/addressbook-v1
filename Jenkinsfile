@@ -9,20 +9,23 @@ pipeline {
             agent any
             steps {
                 script{
-                echo 'Compile the Code'
-                sh "mvn compile"
+                    sshagent(['agent02-id']){
+                    echo 'Compile the Code'
+                    // sh "mvn compile"
+                    sh 'scp -o StrictHostKeyChecking=no -i serer-script.sh ec2-user@172.31.17.188:/home/ec2-user/'
+                    sh 'ssh -o StrictHostKeyChecking=no -i ec2-user@172.31.17.188 "bash server-script.sh"'
                 }
             }
         }
+    }
         stage('CodeReview') {
             agent any
             steps {
-                script{
+            script{
                 echo 'Review the Code'
                 sh "mvn pmd:pmd"
                 }
             }
-        }
         stage('UnitTest') {
             agent any
             steps {
