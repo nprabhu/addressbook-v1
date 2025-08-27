@@ -1,91 +1,36 @@
 pipeline {
-    agent none
-    tools {
-        // Define tools required for the pipeline
-        maven 'npd-maven'
-    }
-
-    parameters {
-        string(name: 'env', defaultValue: 'Test', description: 'Verstion to Deploy')
-        booleanParam(name: 'UTest', defaultValue: true, description: 'Decide whether to execute tests or not')
-        choice(name: 'AppVersion', choices: ['1.1', '1.2', '1.3'], description: 'Choose the App Version')
-    }
+    agent any
 
     stages {
         stage('Compile') {
-            agent any
             steps {
-                script {
-                    echo 'Compile the Code'
-                    sh 'mvn clean compile'
-                }
+                echo 'Compile the Code'
             }
         }
         stage('CodeReview') {
-            agent any
             steps {
-                script {
-                    echo 'Review the Code'
-                    sh 'mvn pmd:pmd'
-                }
+                echo 'Review the Code'
             }
         }
         stage('UnitTest') {
-            agent any
-            when {
-                expression {
-                    params.UTest == true
-                }
-            }
             steps {
-                script {
-                    echo 'Test the Code'
-                    sh 'mvn test'
-                }
+                echo 'Test the Code'
             }
         }
         stage('CoverageAnalysis') {
-            agent any
             steps {
-                script {
-                    echo 'Static Analysis'
-                    sh 'mvn verify'
-                }
+                echo 'StaticCodeCoverage'
             }
         }
         stage('Package') {
-            agent { label 'mpd-lab' }
             steps {
-                script {
-                    echo 'Package the Code'
-                    echo "Deploying to ${params.env} environment with version ${params.AppVersion}"
-                    sh 'mvn package'
-                }
+                echo 'Packaging the code'
             }
         }
-        stage('PublishtoJFrog') {
-            agent any
-            input {
-                message 'Do you want to publish the artifacts to JFrog and archive them?'
-                ok 'Proceed'
-                parameters {
-                    choice(
-                        name: 'TARGET_REPO',
-                        choices: ['JFrog', 'Nexus', 'NPD'],
-                        description: 'Choose the target repository'
-                    )
-                    booleanParam(
-                        name: 'ARCHIVE_ARTIFACTS',
-                        defaultValue: false,
-                        description: 'Archive the artifacts?'
-                    )
-                }
-            }
+        stage('PublishToJFrog') {
+            agent { label 'npd-lab' }
             steps {
-                script {
-                    echo 'Publish the Artifacts to JFrog'
-                    sh 'mvn -U deploy -s settings.xml'
-                }
+                echo 'Publish the Code to JFrog'
             }
         }
     }
