@@ -9,6 +9,7 @@ then
   git pull origin npd-demo02
 else
   git clone https://github.com/nprabhu/addressbook-v1.git
+  git checkout npd-demo02
 fi
 
 cd /home/ec2-user/addressbook-v1

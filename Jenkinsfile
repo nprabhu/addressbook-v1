@@ -3,18 +3,21 @@ pipeline {
     tools {
         maven 'npd-mvn'
     }
+    environment {
+        BUILD_SERVER_AGENT02='ec2-user@172.31.17.188'
+    }
 
     stages {
         stage('Compile') {
             agent any
             steps {
                 script {
-                    sshagent(['agent02-id']) {
-                        echo 'Compile the Code'
-                        // sh "mvn compile"
-                        sh 'scp -o StrictHostKeyChecking=no server-script.sh ec2-user@172.31.17.188:/home/ec2-user/'
-                        sh 'ssh -o StrictHostKeyChecking=no ec2-user@172.31.17.188 "bash server-script.sh"'
-                    }
+                    echo 'Compile the Code'
+                }
+                sshagent(['agent02-id']) {
+                    // sh "mvn compile"
+                    sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
+                    sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} \"bash server-script.sh\""
                 }
             }
         }
