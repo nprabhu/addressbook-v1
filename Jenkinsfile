@@ -1,74 +1,122 @@
 pipeline {
-    agent none
+    agent any
     tools {
         maven 'npd-mvn'
     }
     environment {
-        BUILD_SERVER_AGENT02='ec2-user@172.31.17.188'
+        BUILD_SERVER_AGENT02 = 'ec2-user@x.x.x.x' // Update with the actual IP
+        DEPLOY_SERVER = 'ec2-user@x.x.x.x' // Update with the actual IP
+        IMAGE_NAME = 'npdas/nprabhu:${BUILD_NUMBER}'
     }
-
     stages {
-        stage('Compile') {
-            agent any
+        stage('Checkout') {
+            steps {
+                checkout scm
+                echo 'Checked out code'
+            }
+        }
+        stage('compile') {
             steps {
                 script {
-                    echo 'Compile the Code'
-                }
-                sshagent(['agent02-id']) {
-                    // sh "mvn compile"
-                    sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
-                    sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} 'bash /home/ec2-user/server-script.sh'"
+                    echo 'compile the code'
+                    sh 'mvn clean compile -Dmaven.test.skip=true'
                 }
             }
         }
-        stage('CodeReview') {
-            agent any
+        stage('Code Quality - SonarQube') {
+            environment {
+                SONARQUBE = credentials('sonarqube-token-id')
+            }
             steps {
-                script {
-                    echo 'Review the Code'
-                    sh 'mvn pmd:pmd'
+                withSonarQubeEnv('SonarQubeServer') {
+                    sh 'mvn sonar:sonar -Dsonar.login=$SONARQUBE'
                 }
             }
         }
-        stage('UnitTest') {
-            agent any
+        stage('Unit Test') {
             steps {
                 script {
-                    echo 'Test the Code'
+                    echo 'Testing the Code'
                     sh 'mvn test'
+                    junit 'target/surefire-reports/*.xml'
                 }
             }
         }
-        stage('CoverageAnalysis') {
-            agent { label 'npd-lab' }
-            steps {
-                script {
-                    echo 'StaticCodeCoverage'
-                    sh 'mvn verify'
-                }
-            }
-        }
-        stage('Package') {
+        stage('Code Coverage Analysis') {
             agent any
             steps {
                 script {
-                    echo 'Packaging the code'
-                    sh 'mvn package'
+                    echo 'Analyzing Code Coverage'
+                    sh 'mvn verify'
+                    jacoco execPattern: 'target/jacoco.exec'
                 }
             }
         }
-        stage('PublishToJFrog') {
-            agent { label 'npd-lab' }
-            input {
-                message 'Please approve to publish the artifact to JFrog'
-                ok 'Publish'
-            }
+        stage('Containerize the Application') {
+            agent any
             steps {
                 script {
-                    echo 'Publish the Code to JFrog'
-                    sh 'mvn -U deploy -s settings.xml'
+                    echo 'Packaging the application'
+                    sh 'mvn package'
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            // sshagent block for remote server
+                sshagent(['agent02-id']) {
+            //withCredentials block need to update after jenkins server creation //credentials creation
+                // Copy the script to the remote server
+                    sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
+                // Execute the script on the remote server with the image name
+                    sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
+                // Login to Docker docker password store in jenkins credentials 
+                    sh "ssh ${BUILD_SERVER_AGENT02} sudo docker login -u ${docker_username} -p ${docker_password}"
+                // Push the Docker image
+                    sh "ssh ${BUILD_SERVER_AGENT02} docker push ${IMAGE_NAME}"
                 }
             }
+        }
+        stage('Deploy the Application') {
+            agent any
+            steps {
+                script {
+                    echo 'Packaging the application'
+                    sh 'mvn package'
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                }
+            // sshagent block for remote server
+                sshagent(['agent02-id']) {
+            //withCredentials block need to update after jenkins server creation //credentials creation
+                // Install Docker on the remote server
+                    sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} sudo yum install -y docker"
+                // Start Docker service
+                    sh "ssh ${DEPLOY_SERVER} sudo systemctl start docker"
+                // Login to Docker docker password store in jenkins credentials 
+                    sh "ssh ${DEPLOY_SERVER} sudo docker login -u ${docker_username} -p ${docker_password}"
+                // Run the Docker container
+                    sh "ssh ${DEPLOY_SERVER} sudo docker run -itd -P ${IMAGE_NAME}"
+                }
+            }
+        }
+        stage('Security Scan') {
+            steps {
+                sh 'mvn org.owasp:dependency-check-maven:check'
+            }
+        }
+        stage('Publish to Nexus/Artifactory') {
+            steps {
+                sh 'mvn deploy -DskipTests'
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Please check the logs.'
         }
     }
 }
+
