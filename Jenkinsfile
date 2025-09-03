@@ -26,7 +26,7 @@ pipeline {
         stage('Code Quality - SonarQube') {
             environment {
                 // Inject your SonarQube token from Jenkins credentials
-                SONARQUBE_TOKEN = credentials('sonarqubepassword')
+                SONARQUBE_TOKEN = credentials('sonar-token')
             }
             steps {
                 // Use the configured SonarQube server in Jenkins
