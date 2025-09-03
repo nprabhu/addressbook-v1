@@ -12,11 +12,11 @@ sudo service docker start
 if [ -d "addressbook-v1" ]; then
   echo "repo is cloned and exists"
   cd /home/ec2-user/addressbook-v1
-  git pull origin npd-demo02
+  git pull origin npd-demo03
 else 
   git clone https://github.com/nprabhu/addressbook-v1.git
   cd addressbook-v1
-  git checkout npd-demo02
+  git checkout npd-demo03
 fi
 
 # Compile project
