@@ -24,4 +24,4 @@ cd /home/ec2-user/addressbook-v1
 # mvn compile
 
 # build the docker image and $1 is the image name to pass image name dynamically from Jenkinsfile using $BUILD_NUMBER positional parameter
-sudo docker build -t $1 .   
+sudo docker build -t $1 .

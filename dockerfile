@@ -13,7 +13,6 @@ COPY src ./src
 # Build WAR
 RUN mvn clean package -DskipTests
 
-
 # ----------------------
 # Stage 2: Run with Tomcat
 # ----------------------

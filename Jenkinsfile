@@ -4,9 +4,9 @@ pipeline {
         maven 'npd-mvn'
     }
     environment {
-        BUILD_SERVER_AGENT02 = 'ec2-user@x.x.x.x' // Update with the actual IP
-        DEPLOY_SERVER = 'ec2-user@x.x.x.x' // Update with the actual IP
-        IMAGE_NAME = 'npdas/nprabhu:${BUILD_NUMBER}'
+        BUILD_SERVER_AGENT02 = 'ec2-user@172.31.38.138' // Update with the actual IP
+        DEPLOY_SERVER = 'ec2-user@172.31.46.141' // Update with the actual IP
+        IMAGE_NAME = "npdas/nprabhu: ${BUILD_NUMBER}"
     }
     stages {
         stage('Checkout') {
