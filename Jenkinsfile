@@ -25,11 +25,14 @@ pipeline {
         }
         stage('Code Quality - SonarQube') {
             environment {
-                SONARQUBE = credentials('sonarqube-token-id')
+                // Inject your SonarQube token from Jenkins credentials
+                SONARQUBE_TOKEN = credentials('sonarqubepassword')
             }
             steps {
-                withSonarQubeEnv('SonarQubeServer') {
-                    sh 'mvn sonar:sonar -Dsonar.login=$SONARQUBE'
+                // Use the configured SonarQube server in Jenkins
+                withSonarQubeEnv('npd-sonar-sys') {
+                    // Run Maven with SonarQube analysis
+                    sh "mvn sonar:sonar -Dsonar.projectKey=npd-project -Dsonar.login=$SONARQUBE_TOKEN"
                 }
             }
         }
@@ -60,17 +63,19 @@ pipeline {
                     sh 'mvn package'
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
-            // sshagent block for remote server
+                // sshagent block for remote server
                 sshagent(['agent02-id']) {
-            //withCredentials block need to update after jenkins server creation //credentials creation
-                // Copy the script to the remote server
-                    sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
-                // Execute the script on the remote server with the image name
+                //withCredentials block need to update after jenkins server creation //credentials creation
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'docker_password', usernameVariable: 'docker_username')]) {
+                        // Copy the script to the remote server
+                        sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
+                    // Execute the script on the remote server with the image name
                     sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
-                // Login to Docker docker password store in jenkins credentials 
-                    sh "ssh ${BUILD_SERVER_AGENT02} sudo docker login -u ${docker_username} -p ${docker_password}"
-                // Push the Docker image
-                    sh "ssh ${BUILD_SERVER_AGENT02} docker push ${IMAGE_NAME}"
+                        // Login to Docker docker password store in jenkins credentials 
+                        sh "ssh ${BUILD_SERVER_AGENT02} sudo docker login -u ${docker_username} -p ${docker_password}"
+                        // Push the Docker image
+                        sh "ssh ${BUILD_SERVER_AGENT02} docker push ${IMAGE_NAME}"
+                }
                 }
             }
         }
@@ -82,16 +87,16 @@ pipeline {
                     sh 'mvn package'
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
-            // sshagent block for remote server
+                // sshagent block for remote server
                 sshagent(['agent02-id']) {
-            //withCredentials block need to update after jenkins server creation //credentials creation
-                // Install Docker on the remote server
+                    //withCredentials block need to update after jenkins server creation //credentials creation
+                    // Install Docker on the remote server
                     sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} sudo yum install -y docker"
-                // Start Docker service
+                    // Start Docker service
                     sh "ssh ${DEPLOY_SERVER} sudo systemctl start docker"
-                // Login to Docker docker password store in jenkins credentials 
+                    // Login to Docker docker password store in jenkins credentials 
                     sh "ssh ${DEPLOY_SERVER} sudo docker login -u ${docker_username} -p ${docker_password}"
-                // Run the Docker container
+                    // Run the Docker container
                     sh "ssh ${DEPLOY_SERVER} sudo docker run -itd -P ${IMAGE_NAME}"
                 }
             }
