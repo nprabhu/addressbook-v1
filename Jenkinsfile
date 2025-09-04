@@ -83,7 +83,7 @@ pipeline {
                         sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER}:/home/ec2-user/"
                         sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
                         sh "ssh ${BUILD_SERVER} sudo docker login -u ${docker_username} -p ${docker_password}"
-                        sh "ssh ${BUILD_SERVER} docker push ${IMAGE_NAME}"
+                        sh "ssh ${BUILD_SERVER} sudo docker push ${IMAGE_NAME}"
                     }
                 }
             }
