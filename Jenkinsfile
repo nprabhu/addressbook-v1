@@ -36,25 +36,49 @@ pipeline {
                 }
             }
         }
-        stage('Unit Test') {
+
+        // 🔄 NEW UPDATED STAGE: Combined Unit Test + Code Coverage
+        stage('Unit Test & Code Coverage') {
             steps {
                 script {
-                    echo 'Testing the Code'
-                    sh 'mvn test'
-                    junit 'target/surefire-reports/*.xml'
+                    echo '🔍 Running Unit Tests & Code Coverage Analysis'
+
+                    // Run unit tests and generate JaCoCo report
+                    sh 'mvn test verify -Dmaven.test.failure.ignore=false'
+
+                    // Publish JUnit test results
+                    junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
+
+                    // Publish JaCoCo coverage report with thresholds
+                    jacoco(
+                        execPattern: '**/target/jacoco.exec',
+                        classPattern: '**/target/classes',
+                        sourcePattern: '**/src/main/java',
+                        inclusionPattern: '**/*.class',
+                        exclusionPattern: '**/*Test*.class',
+                        changeBuildStatus: true,
+                        maximumInstructionCoverage: '80',
+                        maximumBranchCoverage: '70',
+                        maximumComplexityCoverage: '70',
+                        maximumLineCoverage: '80'
+                    )
+                }
+            }
+            post {
+                always {
+                    // Archive HTML coverage report
+                    archiveArtifacts artifacts: '**/target/site/jacoco/index.html', fingerprint: true
+                }
+                unsuccessful {
+                    echo '❌ Unit Tests failed or Coverage below threshold'
+                }
+                success {
+                    echo '✅ Unit Tests passed & Coverage thresholds met'
                 }
             }
         }
-        stage('Code Coverage Analysis') {
-            agent any
-            steps {
-                script {
-                    echo 'Analyzing Code Coverage'
-                    sh 'mvn verify'
-                    jacoco execPattern: 'target/jacoco.exec'
-                }
-            }
-        }
+        // 🔄 END OF NEW UPDATE
+
         stage('Containerize the Application') {
             agent any
             steps {
@@ -65,17 +89,16 @@ pipeline {
                 }
                 // sshagent block for remote server
                 sshagent(['agent02-id']) {
-                //withCredentials block need to update after jenkins server creation //credentials creation
                     withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'docker_password', usernameVariable: 'docker_username')]) {
                         // Copy the script to the remote server
                         sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
-                    // Execute the script on the remote server with the image name
-                    sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
+                        // Execute the script on the remote server with the image name
+                        sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
                         // Login to Docker docker password store in jenkins credentials 
                         sh "ssh ${BUILD_SERVER_AGENT02} sudo docker login -u ${docker_username} -p ${docker_password}"
                         // Push the Docker image
                         sh "ssh ${BUILD_SERVER_AGENT02} docker push ${IMAGE_NAME}"
-                }
+                    }
                 }
             }
         }
@@ -89,7 +112,6 @@ pipeline {
                 }
                 // sshagent block for remote server
                 sshagent(['agent02-id']) {
-                    //withCredentials block need to update after jenkins server creation //credentials creation
                     // Install Docker on the remote server
                     sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} sudo yum install -y docker"
                     // Start Docker service
@@ -124,4 +146,3 @@ pipeline {
         }
     }
 }
-
