@@ -4,8 +4,8 @@ pipeline {
         maven 'npd-mvn'
     }
     environment {
-        BUILD_SERVER_AGENT02 = 'ec2-user@172.31.38.138' // Update with the actual IP
-        DEPLOY_SERVER = 'ec2-user@172.31.46.141' // Update with the actual IP
+        BUILD_SERVER = 'ec2-user@172.31.18.58' // Update with the actual IP
+        DEPLOY_SERVER = 'ec2-user@172.31.16.228' // Update with the actual IP
         IMAGE_NAME = "npdas/nprabhu: ${BUILD_NUMBER}"
     }
     stages {
@@ -91,13 +91,13 @@ pipeline {
                 sshagent(['agent02-id']) {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'docker_password', usernameVariable: 'docker_username')]) {
                         // Copy the script to the remote server
-                        sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER_AGENT02}:/home/ec2-user/"
+                        sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER}:/home/ec2-user/"
                         // Execute the script on the remote server with the image name
-                        sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER_AGENT02} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
+                        sh "ssh -o StrictHostKeyChecking=no ${BUILD_SERVER} bash /home/ec2-user/server-script.sh ${IMAGE_NAME}"
                         // Login to Docker docker password store in jenkins credentials 
-                        sh "ssh ${BUILD_SERVER_AGENT02} sudo docker login -u ${docker_username} -p ${docker_password}"
+                        sh "ssh ${BUILD_SERVER} sudo docker login -u ${docker_username} -p ${docker_password}"
                         // Push the Docker image
-                        sh "ssh ${BUILD_SERVER_AGENT02} docker push ${IMAGE_NAME}"
+                        sh "ssh ${BUILD_SERVER} docker push ${IMAGE_NAME}"
                     }
                 }
             }
