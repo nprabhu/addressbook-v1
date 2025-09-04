@@ -77,7 +77,7 @@ pipeline {
                     archiveArtifacts artifacts: 'target/*.war', fingerprint: true
                 }
 
-                sshagent(['agent02-id']) {
+                sshagent(['agent01-id']) {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'docker_password', usernameVariable: 'docker_username')]) {
                         // Copy deployment script to remote build server
                         sh "scp -o StrictHostKeyChecking=no server-script.sh ${BUILD_SERVER}:/home/ec2-user/"
