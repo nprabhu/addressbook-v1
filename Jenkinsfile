@@ -99,10 +99,12 @@ pipeline {
                 }
 
                 sshagent(['agent02-id']) {
-                    sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} sudo yum install -y docker"
-                    sh "ssh ${DEPLOY_SERVER} sudo systemctl start docker"
-                    sh "ssh ${DEPLOY_SERVER} sudo docker login -u ${docker_username} -p ${docker_password}"
-                    sh "ssh ${DEPLOY_SERVER} sudo docker run -itd -P ${IMAGE_NAME}"
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub', passwordVariable: 'docker_password', usernameVariable: 'docker_username')]) {
+                        sh "ssh -o StrictHostKeyChecking=no ${DEPLOY_SERVER} sudo yum install -y docker"
+                        sh "ssh ${DEPLOY_SERVER} sudo systemctl start docker"
+                        sh "ssh ${DEPLOY_SERVER} sudo docker login -u ${docker_username} -p ${docker_password}"
+                        sh "ssh ${DEPLOY_SERVER} sudo docker run -itd -P ${IMAGE_NAME}"
+                    }
                 }
             }
         }
